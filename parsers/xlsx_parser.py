@@ -37,7 +37,7 @@ class XLSXParser(Parser):
             for row_no in range(1, sheet.nrows):
                 row_dict = {}
                 for key in index_key_map:
-                    if index_key_map[key]:
+                    if index_key_map.get(key, None) != None:
                         row_dict[key] = sheet.cell_value(row_no, index_key_map[key])
                     else:
                         row_dict[key] = None

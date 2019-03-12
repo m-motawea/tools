@@ -2,6 +2,7 @@ import paramiko
 import time
 import re
 
+import cryptography.hazmat.backends.openssl
 
 class SSHConnection:
     def __init__(self, ip):
@@ -41,11 +42,13 @@ class SSHConnection:
         # wait for prompt
         prompt_flag = False
         while not prompt_flag:
+            time.sleep(1)
             rcv = channel.recv(1024).decode()
-            prompt_flag = re.search(".*\[sudo\].*", rcv)
+            prompt_flag = "Password:" in rcv or "sudo" in rcv
             if not prompt_flag:
                 time.sleep(1)
         channel.send("%s\n" % password)
+        time.sleep(5)
         rcv = channel.recv(1024).decode()
 
         if 'root' not in rcv:
