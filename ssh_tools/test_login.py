@@ -1,8 +1,6 @@
 import paramiko
 import time
-import re
 
-import cryptography.hazmat.backends.openssl
 
 class SSHConnection:
     def __init__(self, ip):
@@ -51,7 +49,7 @@ class SSHConnection:
         time.sleep(5)
         rcv = channel.recv(1024).decode()
 
-        if 'root' not in rcv:
+        if 'root' not in rcv and "#" not in rcv:
             return False, rcv
         else:
             return True, None
