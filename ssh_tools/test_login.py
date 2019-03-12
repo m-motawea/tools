@@ -1,4 +1,7 @@
 import paramiko
+import time
+import re
+
 
 class SSHConnection:
     def __init__(self, ip):
@@ -29,17 +32,27 @@ class SSHConnection:
 
     def test_switch_root(self, password, sudo=False):
         if sudo:
-            cmd = 'sudo su -'
+            cmd = 'sudo su -\n'
         else:
-            cmd = 'su -'
-        chan = self.ssh.exec_command(command=cmd, get_pty=True)
-        chan.send(password)
-        chan.send("\n")
-        stderr = chan.recv_stderr()
-        if stderr:
-            return False, stderr
+            cmd = 'su -\n'
+
+        channel = self.ssh.invoke_shell()
+        channel.send(cmd)
+        # wait for prompt
+        prompt_flag = False
+        while not prompt_flag:
+            rcv = channel.recv(1024).decode()
+            prompt_flag = re.search(".*\[sudo\].*", rcv)
+            if not prompt_flag:
+                time.sleep(1)
+        channel.send("%s\n" % password)
+        rcv = channel.recv(1024).decode()
+
+        if 'root' not in rcv:
+            return False, rcv
         else:
             return True, None
+
 
     def __del__(self):
         self.ssh.close()

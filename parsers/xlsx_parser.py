@@ -32,8 +32,6 @@ class XLSXParser(Parser):
             key = sheet.cell_value(0, col)
             if key in self.keys:
                 index_key_map[key] = col
-            else:
-                index_key_map[key] = None
 
         if index_key_map:
             for row_no in range(1, sheet.nrows):
