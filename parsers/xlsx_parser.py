@@ -101,10 +101,21 @@ class ThreadedXLSXParser(Parser):
             if key in self.keys:
                 index_key_map[key] = col
 
+        if self.no_threads == 1:
+            self._parse_target(
+                sheet=sheet,
+                key_col=index_key_map,
+                start_row=1,
+                end_row=sheet.nrows,
+                name="main"
+            )
+            return
+
+
         add_rows = (sheet.nrows - 1) % self.no_threads
         no_rows = sheet.nrows - 1 - add_rows
         step = int(no_rows / self.no_threads)
-        for i in range(1, no_rows, step):
+        for i in range(1, no_rows + 1, step):
             end_row = i + step
             t = Thread(target=self._parse_target, kwargs={
                 "sheet": sheet,

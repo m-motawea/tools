@@ -11,7 +11,7 @@ class SSHConnection:
 
     def test_password_login(self, username, password, timeout=5):
         try:
-            self.ssh.connect(hostname=self.ip, username=username, password=password, timeout=timeout)
+            self.ssh.connect(hostname=self.ip, username=username, password=password, timeout=timeout,  look_for_keys=False, allow_agent=False)
         except Exception as e:
             return False, e.__repr__()
 
