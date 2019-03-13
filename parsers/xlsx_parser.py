@@ -102,27 +102,31 @@ class ThreadedXLSXParser(Parser):
                 index_key_map[key] = col
 
         add_rows = (sheet.nrows - 1) % self.no_threads
-        step = int((sheet.nrows - 1) / self.no_threads)
-        for i in range(1, sheet.nrows, step):
+        no_rows = sheet.nrows - 1 - add_rows
+        step = int(no_rows / self.no_threads)
+        for i in range(1, no_rows, step):
+            end_row = i + step
             t = Thread(target=self._parse_target, kwargs={
                 "sheet": sheet,
                 "key_col": index_key_map,
                 "start_row": i,
-                "end_row": i + step,
+                "end_row": end_row,
                 "name": str(i)
             }, daemon=True)
             t.start()
             self.threads[str(i)] = t
+
         if add_rows:
-            t = Thread(target=self._parse_target, kwargs={
+            print("---------------------add_rows-----------------")
+            t_add = Thread(target=self._parse_target, kwargs={
                 "sheet": sheet,
                 "key_col": index_key_map,
-                "start_row": i,
-                "end_row": i + add_rows,
+                "start_row": no_rows + 1,
+                "end_row": sheet.nrows,
                 "name": "add_rows"
             }, daemon=True)
-            t.start()
-            self.threads["add"] = t
+            t_add.start()
+            self.threads[str(sheet.nrows + 1)] = t_add
 
 
     def _parse_target(self, sheet: xlrd.sheet.Sheet, key_col: dict, start_row: int, end_row: int, name: str):
@@ -133,6 +137,7 @@ class ThreadedXLSXParser(Parser):
         :param end_row: set to sheet.nrows for single thread
         :return: Flag: Bool, columns_processes: int or error msg
         '''
+        print("thread parse target started. start_row: {}, end_row: {}, name: {}".format(start_row, end_row, name))
         try:
             thread_result = []
             for row_no in range(start_row, end_row):
@@ -143,6 +148,7 @@ class ThreadedXLSXParser(Parser):
 
             self.result_lock.acquire()
             self.result += thread_result
+            print("thread {} result:\n{}\n\n".format(name, thread_result))
             self.result_lock.release()
             self.thread_state[name] = True
             return True, end_row - start_row

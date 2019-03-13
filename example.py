@@ -4,12 +4,14 @@ from ssh_tools import SSHConnection
 
 
 
-parser = ThreadedXLSXParser(tab_names=['hosts'], keys=['ip_address', 'password', 'key_path', 'username', 'id'], no_threads=2)
+parser = ThreadedXLSXParser(tab_names=['hosts'], keys=['ip_address', 'password', 'key_path', 'username', 'id'], no_threads=4)
 
 result = parser.parse('Test.xlsx')
 
-print("parsing finished.")
-print("result: \n", result)
+print("parsing finished. {} hosts.".format(len(result)))
+print("result: \n")
+for host_dict in result:
+    print(host_dict)
 
 for host in result:
     res, msg = ping(host['ip_address'])
