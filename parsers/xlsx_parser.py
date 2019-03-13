@@ -3,6 +3,7 @@ from .base import Parser
 import os
 from threading import Thread
 from multiprocessing import Lock
+import datetime
 
 
 class XLSXParser(Parser):
@@ -53,6 +54,9 @@ class XLSXParser(Parser):
 
 
 
+
+
+
 class ThreadedXLSXParser(Parser):
     def __init__(self, tab_names=[], keys=[], no_threads=1):
         self.tab_names = tab_names
@@ -64,7 +68,7 @@ class ThreadedXLSXParser(Parser):
         self.thread_state = {}
 
 
-    def parse(self, path):
+    def parse(self, path, timeout=30):
         if not os.path.exists(path):
             raise Exception("file {} does not exist".format(path))
 
@@ -77,12 +81,16 @@ class ThreadedXLSXParser(Parser):
             worksheet = workbook.sheet_by_index(0)
             self._parse_sheet(worksheet)
         end = False
+
+        start_time = datetime.datetime.now()
         while not end:
             end = True
             for thread in self.threads.values():
                 print("waiting for thread: {}".format(thread.__str__()))
                 if thread.is_alive():
                     end = False
+            if datetime.datetime.now() > start_time + datetime.timedelta(seconds=timeout):
+                break
         return self.result
 
 

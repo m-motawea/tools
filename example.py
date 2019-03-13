@@ -9,6 +9,8 @@ parser = ThreadedXLSXParser(tab_names=['hosts'], keys=['ip_address', 'password',
 
 result = parser.parse('Test.xlsx')
 
+print("parsing finished.")
+print("result: \n", result)
 
 for host in result:
     res, msg = ping(host['ip_address'])
