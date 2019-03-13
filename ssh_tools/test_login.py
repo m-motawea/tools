@@ -40,19 +40,22 @@ class SSHConnection:
         # wait for prompt
         prompt_flag = False
         while not prompt_flag:
-            time.sleep(1)
+            #time.sleep(1)
             rcv = channel.recv(1024).decode()
             prompt_flag = "Password:" in rcv or "sudo" in rcv
             if not prompt_flag:
                 time.sleep(1)
         channel.send("%s\n" % password)
-        time.sleep(5)
+        #time.sleep(1)
+        rcv = channel.recv(1024).decode()
+        channel.send("whoami\n")
+        #time.sleep(1)
         rcv = channel.recv(1024).decode()
 
-        if 'root' not in rcv and "#" not in rcv:
-            return False, rcv
-        else:
+        if "root" in rcv:
             return True, None
+        else:
+            return False, rcv
 
 
     def __del__(self):

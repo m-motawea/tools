@@ -1,9 +1,11 @@
-from parsers.xlsx_parser import XLSXParser
+from parsers.xlsx_parser import XLSXParser, ThreadedXLSXParser
 from ssh_tools.test_ping import ping
 from ssh_tools.test_login import SSHConnection
 
 
-parser = XLSXParser(tab_names=['hosts'], keys=['ip_address', 'password', 'key_path', 'username'])
+#parser = XLSXParser(tab_names=['hosts'], keys=['ip_address', 'password', 'key_path', 'username'])
+
+parser = ThreadedXLSXParser(tab_names=['hosts'], keys=['ip_address', 'password', 'key_path', 'username'], no_threads=2)
 
 result = parser.parse('Test.xlsx')
 
