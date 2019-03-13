@@ -50,7 +50,7 @@ class SSHConnection:
             #time.sleep(1)
             rcv = channel.recv(1024).decode()
             channel.send("whoami\n")
-            #time.sleep(1)
+            time.sleep(1)
             rcv = channel.recv(1024).decode()
 
             if "root" in rcv:
