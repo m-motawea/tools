@@ -9,9 +9,9 @@ class SSHConnection:
         self.ip = ip
 
 
-    def test_password_login(self, username, password):
+    def test_password_login(self, username, password, timeout=5):
         try:
-            self.ssh.connect(hostname=self.ip, username=username, password=password)
+            self.ssh.connect(hostname=self.ip, username=username, password=password, timeout=timeout)
         except Exception as e:
             return False, e.__repr__()
 
@@ -19,9 +19,9 @@ class SSHConnection:
             return True, None
 
 
-    def test_key_login(self, username, key_path, passphrase=None):
+    def test_key_login(self, username, key_path, passphrase=None, timeout=5):
         try:
-            self.ssh.connect(hostname=self.ip, username=username, key_filename=key_path, passphrase=passphrase)
+            self.ssh.connect(hostname=self.ip, username=username, key_filename=key_path, passphrase=passphrase, timeout=timeout)
         except Exception as e:
             return False, e.__repr__()
 
@@ -30,33 +30,35 @@ class SSHConnection:
 
 
     def test_switch_root(self, password, sudo=False):
-        if sudo:
-            cmd = 'sudo su -\n'
-        else:
-            cmd = 'su -\n'
+        try:
+            if sudo:
+                cmd = 'sudo su -\n'
+            else:
+                cmd = 'su -\n'
 
-        channel = self.ssh.invoke_shell()
-        channel.send(cmd)
-        # wait for prompt
-        prompt_flag = False
-        while not prompt_flag:
+            channel = self.ssh.invoke_shell()
+            channel.send(cmd)
+            # wait for prompt
+            prompt_flag = False
+            while not prompt_flag:
+                #time.sleep(1)
+                rcv = channel.recv(1024).decode()
+                prompt_flag = "Password:" in rcv or "sudo" in rcv
+                if not prompt_flag:
+                    time.sleep(1)
+            channel.send("%s\n" % password)
             #time.sleep(1)
             rcv = channel.recv(1024).decode()
-            prompt_flag = "Password:" in rcv or "sudo" in rcv
-            if not prompt_flag:
-                time.sleep(1)
-        channel.send("%s\n" % password)
-        #time.sleep(1)
-        rcv = channel.recv(1024).decode()
-        channel.send("whoami\n")
-        #time.sleep(1)
-        rcv = channel.recv(1024).decode()
+            channel.send("whoami\n")
+            #time.sleep(1)
+            rcv = channel.recv(1024).decode()
 
-        if "root" in rcv:
-            return True, None
-        else:
-            return False, rcv
-
+            if "root" in rcv:
+                return True, None
+            else:
+                return False, rcv
+        except Exception as e:
+            return None, e
 
     def __del__(self):
         self.ssh.close()
