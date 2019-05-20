@@ -1,7 +1,6 @@
 import paramiko
 import time
 
-import glanceclient.client
 class SSHConnection:
     def __init__(self, ip):
         self.ssh = paramiko.SSHClient()
@@ -60,15 +59,16 @@ class SSHConnection:
     def exec_as_root(self, main_cmd):
         rcv = ''
         try:
-            self.root_channel.send(main_cmd)
-            self.root_channel.send("\n")
+            self.root_channel.send(main_cmd + "\n")
             while not self.root_channel.recv_ready():
                 print('waaiting for read ready')
                 pass
             buffer = self.root_channel.recv(1024).decode()
             rcv = buffer
             while self.root_channel.recv_ready():
+                print('waiting for buffer empty after cmd execute')
                 buffer = self.root_channel.recv(1024).decode()
+                print(buffer)
                 rcv += buffer
             print(rcv)
             return True, rcv
