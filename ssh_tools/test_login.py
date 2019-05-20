@@ -1,12 +1,13 @@
 import paramiko
 import time
 
-
+import glanceclient.client
 class SSHConnection:
     def __init__(self, ip):
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self.ip = ip
+        self.root_channel = None
 
 
     def test_password_login(self, username, password, timeout=5):
@@ -38,14 +39,9 @@ class SSHConnection:
 
             channel = self.ssh.invoke_shell()
             channel.send(cmd)
-            # wait for prompt
-            prompt_flag = False
-            while not prompt_flag:
-                #time.sleep(1)
-                rcv = channel.recv(1024).decode()
-                prompt_flag = "Password:" in rcv or "sudo" in rcv
-                if not prompt_flag:
-                    time.sleep(1)
+            while not channel.recv_ready():
+                print('waiting for password ready')
+                pass
             channel.send("%s\n" % password)
             #time.sleep(1)
             rcv = channel.recv(1024).decode()
@@ -54,9 +50,28 @@ class SSHConnection:
             rcv = channel.recv(1024).decode()
 
             if "root" in rcv:
+                self.root_channel = channel
                 return True, None
             else:
                 return False, rcv
+        except Exception as e:
+            return None, e
+
+    def exec_as_root(self, main_cmd):
+        rcv = ''
+        try:
+            self.root_channel.send(main_cmd)
+            self.root_channel.send("\n")
+            while not self.root_channel.recv_ready():
+                print('waaiting for read ready')
+                pass
+            buffer = self.root_channel.recv(1024).decode()
+            rcv = buffer
+            while self.root_channel.recv_ready():
+                buffer = self.root_channel.recv(1024).decode()
+                rcv += buffer
+            print(rcv)
+            return True, rcv
         except Exception as e:
             return None, e
 
