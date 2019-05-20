@@ -26,7 +26,9 @@ def validate_hosts(hosts=[]):
             print('login successful {}'.format(host['ip']))
             res, msg = con.test_switch_root(host['password'], sudo=True)
             if res:
-                res_msg = con.exec_as_root("ls;sleep 1m")
+                cmd = "ls /home -R"
+                success, exec_result = con.exec_as_root(cmd)
+                host['exec'] = {cmd: {'state': success, 'msg': exec_result}}
                 host["ssh"]["root_sw"]["state"] = True
                 print('switch root success using sudo {}'.format(host['ip']))
             else:
@@ -86,7 +88,6 @@ if __name__ == "__main__":
                         end = False
         except KeyboardInterrupt:
             pass
-    x = input('press Enter to exit')
     print("-----------------------------------------------------------------------")
     print("result: \n{}".format(json.dumps(result, default=str)))
     with open('result.json', "w") as log:

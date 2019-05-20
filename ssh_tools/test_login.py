@@ -43,10 +43,20 @@ class SSHConnection:
                 pass
             channel.send("%s\n" % password)
             #time.sleep(1)
-            rcv = channel.recv(1024).decode()
+            while not channel.recv_ready():
+                print('waiting for password ready')
+                pass
             channel.send("whoami\n")
-            time.sleep(1)
-            rcv = channel.recv(1024).decode()
+            buffer = channel.recv(1024).decode()
+            rcv = ''
+            while buffer:
+                print('waiting for buffer empty after cmd execute')
+                rcv += str(buffer)
+                channel.settimeout(1)
+                try:
+                    buffer = channel.recv(1024).decode()
+                except:
+                    buffer = None
 
             if "root" in rcv:
                 self.root_channel = channel
@@ -57,18 +67,25 @@ class SSHConnection:
             return None, e
 
     def exec_as_root(self, main_cmd):
+        rcv = ''
         try:
-            self.root_channel.send(main_cmd + "\n")
+            cmd = str(main_cmd + "\n")
+            print(cmd)
+            print(main_cmd)
+            self.root_channel.send(cmd)
             while not self.root_channel.recv_ready():
-                print('waaiting for read ready')
+                print('waiting for read ready')
                 pass
             buffer = self.root_channel.recv(1024).decode()
-            rcv = buffer
-            while self.root_channel.recv_ready():
+            while buffer:
                 print('waiting for buffer empty after cmd execute')
-                buffer = self.root_channel.recv(1024).decode()
-                print(buffer)
-                rcv += buffer
+                rcv += str(buffer)
+                self.root_channel.settimeout(5)
+                try:
+                    buffer = self.root_channel.recv(1024).decode()
+                except:
+                    buffer = None
+
             print(rcv)
             return True, rcv
         except Exception as e:
@@ -78,10 +95,11 @@ class SSHConnection:
         stdin, stdout, stderr = self.ssh.exec_command(command=cmd)
         stdin.close()
         error = stderr.read()
+        rcv = stdout.read()
         if error:
             return False, error
         else:
-            return True, None
+            return True, rcv
 
     def __del__(self):
         self.ssh.close()
