@@ -57,7 +57,6 @@ class SSHConnection:
             return None, e
 
     def exec_as_root(self, main_cmd):
-        rcv = ''
         try:
             self.root_channel.send(main_cmd + "\n")
             while not self.root_channel.recv_ready():
@@ -74,6 +73,15 @@ class SSHConnection:
             return True, rcv
         except Exception as e:
             return None, e
+
+    def exec_as_seesion_user(self, cmd):
+        stdin, stdout, stderr = self.ssh.exec_command(command=cmd)
+        stdin.close()
+        error = stderr.read()
+        if error:
+            return False, error
+        else:
+            return True, None
 
     def __del__(self):
         self.ssh.close()
