@@ -5,11 +5,11 @@ class Logger(object):
     def __init__(self, path="./"):
         self.stream_logger, self.info_logger, self.error_logger, self.debug_logger = self.initialize_logger(path)
 ​
-    def initialize_logger(self, path="./"):
-        error_logger = logging.getLogger("BUCKET_MIGRATION_ERROR")
-        info_logger = logging.getLogger("BUCKET_MIGRATION_INFO")
-        debug_logger = logging.getLogger("BUCKET_MIGRATION_DEBUG")
-        stream_logger = logging.getLogger("BUCKET_MIGRATION_STREAM")
+    def initialize_logger(self, path="./", name=__name__):
+        error_logger = logging.getLogger(name+"_ERROR")
+        info_logger = logging.getLogger(name+"_INFO")
+        debug_logger = logging.getLogger(name+"_DEBUG")
+        stream_logger = logging.getLogger(name+"_STREAM")
         stream_handler = logging.StreamHandler()
         error_handler = logging.FileHandler(path + 'error.log')
         info_handler = logging.FileHandler(path + 'info.log')
